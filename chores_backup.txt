@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { Shield, Sword, Trophy, Star } from 'lucide-react';
+
+const MOCK_QUESTS = [
+  { id: 1, title: 'Morning Homestead Prep', description: 'Feed animals, check water levels, open greenhouse.', xp: 50, category: 'Practical Life', completed: false },
+  { id: 2, title: 'Culinary Arts: Lunch', description: 'Prepare a balanced lunch for the family using garden ingredients.', xp: 100, category: 'Health & Homesteading', completed: false },
+  { id: 3, title: 'Sanctuary Restoration', description: 'Clean and organize main living areas.', xp: 75, category: 'Life Autonomy', completed: false },
+];
+
+export default function Chores() {
+  const [quests, setQuests] = useState(MOCK_QUESTS);
+  const [level, setLevel] = useState(12);
+  const [xp, setXp] = useState(3450);
+  const nextLevelXp = 4000;
+
+  const completeQuest = (id: number) => {
+    setQuests(quests.map(q => {
+      if (q.id === id && !q.completed) {
+        setXp(prev => prev + q.xp);
+        return { ...q, completed: true };
+      }
+      return q;
+    }));
+  };
+
+  return (
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-serif font-bold text-slate-900">Autonomy Quests</h1>
+          <p className="text-lg text-slate-600 mt-2">Gamified Life Skills & Household Contributions</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="bg-amber-100 p-3 rounded-xl text-amber-600">
+            <Trophy size={32} />
+          </div>
+          <div>
+            <div className="flex justify-between items-end mb-1">
+              <span className="font-bold text-slate-900 text-lg">Level {level}</span>
+              <span className="text-xs text-slate-500 font-mono">{xp} / {nextLevelXp} XP</span>
+            </div>
+            <div className="w-48 bg-slate-100 rounded-full h-2">
+              <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${(xp / nextLevelXp) * 100}%` }}></div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {quests.map(quest => (
+          <div 
+            key={quest.id} 
+            className={`relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+              quest.completed 
+                ? 'bg-slate-50 border-slate-200 opacity-60 grayscale' 
+                : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300'
+            }`}
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider">
+                  {quest.category === 'Practical Life' && <Shield size={14} />}
+                  {quest.category === 'Life Autonomy' && <Sword size={14} />}
+                  {quest.category === 'Health & Homesteading' && <Star size={14} />}
+                  {quest.category}
+                </span>
+                <span className="font-mono font-bold text-indigo-600">+{quest.xp} XP</span>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">{quest.title}</h3>
+              <p className="text-slate-600 mb-6 line-clamp-2">{quest.description}</p>
+              
+              <button 
+                onClick={() => completeQuest(quest.id)}
+                disabled={quest.completed}
+                className={`w-full py-3 rounded-xl font-medium transition-colors ${
+                  quest.completed 
+                    ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                    : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                }`}
+              >
+                {quest.completed ? 'Quest Completed' : 'Claim Victory'}
+              </button>
+            </div>
+            
+            {quest.completed && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-[1px]">
+                <div className="bg-emerald-500 text-white p-3 rounded-full shadow-lg transform rotate-12">
+                  <CheckSquare size={32} />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Temporary icon fallback if missing
+const CheckSquare = ({size}: {size: number}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 11 12 14 22 4"></polyline>
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+  </svg>
+);

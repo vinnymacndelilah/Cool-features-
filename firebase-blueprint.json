@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "Quest": {
+      "title": "Quest",
+      "description": "A gamified chore or autonomy task.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 500 },
+        "xp": { "type": "number" },
+        "category": { "type": "string", "maxLength": 50 },
+        "completed": { "type": "boolean" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "description", "xp", "category", "completed", "userId", "createdAt"]
+    },
+    "Progress": {
+      "title": "Progress",
+      "description": "Student progress tracking for subjects.",
+      "type": "object",
+      "properties": {
+        "history": { "type": "number" },
+        "science": { "type": "number" },
+        "math": { "type": "number" },
+        "discipleship": { "type": "number" },
+        "creativeEconomy": { "type": "number" },
+        "homesteading": { "type": "number" },
+        "userId": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["history", "science", "math", "discipleship", "creativeEconomy", "homesteading", "userId", "updatedAt"]
+    },
+    "Creation": {
+      "title": "Creation",
+      "description": "Videos or projects created by the student to share.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 150 },
+        "videoUrl": { "type": "string", "maxLength": 500 },
+        "subject": { "type": "string", "maxLength": 50 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "videoUrl", "subject", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}/quests/{questId}": {
+      "schema": { "$ref": "#/entities/Quest" },
+      "description": "Quests for a specific user."
+    },
+    "users/{userId}/progress/{progressId}": {
+      "schema": { "$ref": "#/entities/Progress" },
+      "description": "Progress records for a specific user."
+    },
+    "users/{userId}/creations/{creationId}": {
+      "schema": { "$ref": "#/entities/Creation" },
+      "description": "Video creations for a specific user."
+    }
+  }
+}

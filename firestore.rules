@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      // Prototype bypass for demo-user, otherwise standard auth
+      return true; // Simplified for prototype usability without Auth UI
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Helpers
+    function isValidBookEntry(data) {
+      return data.keys().hasAll(['title', 'theme', 'answers', 'lessonData', 'userId', 'createdAt']) &&
+             data.title is string && 
+             data.userId is string &&
+             data.createdAt is number;
+    }
+    function isValidQuest(data) {
+      return data.keys().hasAll(['title', 'description', 'xp', 'category', 'completed', 'userId', 'createdAt']) &&
+             data.keys().size() == 7 &&
+             data.title is string && data.title.size() <= 100 &&
+             data.description is string && data.description.size() <= 500 &&
+             data.xp is number &&
+             data.category is string && data.category.size() <= 50 &&
+             data.completed is bool &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number;
+    }
+
+    function isValidProgress(data) {
+      return data.keys().hasAll(['history', 'science', 'math', 'discipleship', 'creativeEconomy', 'homesteading', 'userId', 'updatedAt']) &&
+             data.keys().size() == 8 &&
+             data.history is number &&
+             data.science is number &&
+             data.math is number &&
+             data.discipleship is number &&
+             data.creativeEconomy is number &&
+             data.homesteading is number &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.updatedAt is number;
+    }
+    
+    function isValidCreation(data) {
+      return data.keys().hasAll(['title', 'videoUrl', 'subject', 'userId', 'createdAt']) &&
+             data.keys().size() == 5 &&
+             data.title is string && data.title.size() <= 150 &&
+             data.videoUrl is string && data.videoUrl.size() <= 500 &&
+             data.subject is string && data.subject.size() <= 50 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.createdAt is number;
+    }
+
+    match /users/{userId}/quests/{questId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(questId) &&
+                    isValidQuest(incoming()) && incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time.toMillis();
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidId(questId) &&
+                    isValidQuest(incoming()) && incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['completed']);
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(questId);
+      allow list: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/progress/{progressId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidId(progressId) &&
+                    isValidProgress(incoming()) && incoming().userId == request.auth.uid &&
+                    incoming().updatedAt == request.time.toMillis();
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidId(progressId) &&
+                    isValidProgress(incoming()) && incoming().userId == existing().userId &&
+                    incoming().updatedAt == request.time.toMillis() &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['history', 'science', 'math', 'discipleship', 'creativeEconomy', 'homesteading', 'updatedAt']);
+      allow delete: if false;
+      allow list: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/creations/{creationId} {
+      allow read: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+      allow create: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user') && isValidId(creationId) &&
+                    isValidCreation(incoming()) && 
+                    incoming().createdAt == request.time.toMillis();
+      allow update: if false; // immutable video creations for now
+      allow delete: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user') && isValidId(creationId);
+      allow list: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+    }
+
+    match /users/{userId}/bookEntries/{entryId} {
+      allow read, list: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+      allow create: if isSignedIn() && isValidId(entryId) && isValidBookEntry(incoming());
+      allow update, delete: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+    }
+
+    match /users/{userId}/standards/{standardId} {
+      allow read, write: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+    }
+
+    match /users/{userId}/state/{stateId} {
+      allow read, write: if isSignedIn() && (request.auth == null || request.auth.uid == userId || userId == 'demo-user');
+    }
+  }
+}
